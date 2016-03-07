@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using LeagueSharp;
 using LeagueSharp.Common;
 using Color = System.Drawing.Color;
 using SharpDX;
+using SPrediction;
 
 namespace Sense_Elise
 {
@@ -133,10 +131,10 @@ namespace Sense_Elise
 
             if (Option_Item("Spider Harass Q"))
                 CastSpiderQ();
-/*
-            if (Option_Item("Spider Harass W"))
-                CastSpiderW();
-                */
+            /*
+                        if (Option_Item("Spider Harass W"))
+                            CastSpiderW();
+                            */
         }
 
         static void LaneClear()
@@ -334,6 +332,11 @@ namespace Sense_Elise
                             HC = HitChance.VeryHigh;
                             break;
                     }
+                    if (Option.Item("Prediction").GetValue<StringList>().SelectedIndex == 1)
+                    {
+                        E.SPredictionCastArc(Target, HC, true);
+                    }
+
                     if (Dashing.Hitchance == HitChance.Dashing)
                         E.CastIfHitchanceEquals(Target, HitChance.Dashing, true);
 
@@ -359,7 +362,6 @@ namespace Sense_Elise
         /*
         static void CastSpiderW()
         {
-
             if (Spider() && W2.IsReady())
             {
                 var target = TargetSelector.GetTarget(150, TargetSelector.DamageType.Magical);
@@ -368,7 +370,6 @@ namespace Sense_Elise
                         W2.Cast(true);
             }
         }
-
             */
 
         static void Orbwalking_AfterAttack(AttackableUnit unit, AttackableUnit target)
@@ -639,15 +640,15 @@ namespace Sense_Elise
                 if (Option_Item("Spider E Draw Target"))
                     if (E2target != null)
                         Drawing.DrawCircle(E2target.Position, 150, Color.Green);
-               
- 
+
+
                 var EQtarget = TargetSelector.GetTarget(E2.Range + Q2.Range, TargetSelector.DamageType.Magical);
                 var sEMinions = MinionManager.GetMinions(Player.ServerPosition, E2.Range).FirstOrDefault();
                 var sE2Minions = MinionManager.GetMinions(E2.Range + Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.None).FirstOrDefault(x => x.Distance(Player.Position) < Q.Range && Player.Distance(sEMinions.Position) < E2.Range);
                 if (Option_Item("Spider EQ Draw Minion"))
-                    if (EQtarget != null)
+                    if (EQtarget != null && E2target == null)
                         Drawing.DrawCircle(sE2Minions.Position, 100, Color.Blue);
-               
+
                 if (Option_Item("Human Skill Cooldown"))
                 {
                     if (_humaQcd == 0 && Q.Level > 0)
@@ -678,6 +679,13 @@ namespace Sense_Elise
 
             Option.AddSubMenu(new Menu("Orbwalker", "Orbwalker"));
             orbWalker = new Orbwalking.Orbwalker(Option.SubMenu("Orbwalker"));
+
+            var Prediction = new Menu("Prediction", "Prediction Mode");
+            {
+                Prediction.AddItem(new MenuItem("Prediction", "Prediction Mode").SetValue(new StringList(new[] { "Common", "Sprediction"}, 0)));
+                Prediction.AddItem(new MenuItem("E Hitchance", "Human E Hitchance").SetValue(new StringList(new[] { "VeryHigh", "High", "Medium", "Low", "Impossible" })));
+                Prediction.AddItem(new MenuItem("Reload", "Press F5 Reload again")).Show(false).SetFontStyle(System.Drawing.FontStyle.Regular, SharpDX.Color.SkyBlue);
+            }
 
             var Harass = new Menu("Harass", "Harass");
             {
@@ -742,7 +750,6 @@ namespace Sense_Elise
                 Misc.SubMenu("Smite").AddItem(new MenuItem("Smite Enemy", "Smite Use Enemy(Click the Target)").SetValue(true));
                 */
                 Misc.AddItem(new MenuItem("Fast Instant Rappel", "Fast Instant_Rappel").SetValue(new KeyBind('G', KeyBindType.Press)));
-                Misc.AddItem(new MenuItem("E Hitchance", "Human E Hitchance").SetValue(new StringList(new[] { "VeryHigh", "High", "Medium", "Low", "Impossible" })));
             }
             Option.AddSubMenu(Misc);
 

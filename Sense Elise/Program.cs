@@ -647,8 +647,8 @@ namespace Sense_Elise
                 var sEMinions = MinionManager.GetMinions(Player.ServerPosition, E2.Range).FirstOrDefault();
                 var sE2Minions = MinionManager.GetMinions(E2.Range + Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.None).FirstOrDefault(x => x.Distance(Player.Position) < Q.Range && Player.Distance(sEMinions.Position) < E2.Range);
                 if (Option_Item("Spider EQ Draw Minion"))
-                    if (EQtarget != null && E2target == null)
-                        Drawing.DrawCircle(sE2Minions.Position, 100, Color.Blue);
+                    if (EQtarget != null && E2target == null && sE2Minions != null)
+                        Drawing.DrawCircle(EQtarget.Position, 150, Color.Blue);
 
                 if (Option_Item("Human Skill Cooldown"))
                 {

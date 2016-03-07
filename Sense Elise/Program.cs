@@ -278,7 +278,7 @@ namespace Sense_Elise
             if (Human() && Q.IsReady())
             {
 
-                var Target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
+                var Target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical, true);
                 if (Target != null)
                     Q.CastOnUnit(Target, true);
             }
@@ -288,7 +288,7 @@ namespace Sense_Elise
         {
             if (Human() && W.IsReady())
             {
-                var Target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical);
+                var Target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical, true);
                 var prediction = W.GetPrediction(Target);
                 if (Target != null)
                 {
@@ -306,7 +306,7 @@ namespace Sense_Elise
             if (Human() && E.IsReady())
             {
 
-                var Target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
+                var Target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical, true);
                 var Dashing = E.GetPrediction(Target);
                 if (Target != null)
                 {
@@ -314,37 +314,40 @@ namespace Sense_Elise
                     switch (Option.Item("E Hitchance").GetValue<StringList>().SelectedIndex)
                     {
                         case 0:
-                            HC = HitChance.VeryHigh;
+                            HC = HitChance.Impossible;
                             break;
                         case 1:
-                            HC = HitChance.High;
+                            HC = HitChance.Low;
                             break;
                         case 2:
                             HC = HitChance.Medium;
                             break;
                         case 3:
-                            HC = HitChance.Low;
+                            HC = HitChance.High;
                             break;
                         case 4:
-                            HC = HitChance.Impossible;
-                            break;
-                        default:
                             HC = HitChance.VeryHigh;
                             break;
                     }
-                    if (Option.Item("Prediction").GetValue<StringList>().SelectedIndex == 1)
+
+                    if (Option.Item("Prediction M").GetValue<StringList>().SelectedIndex == 0)
                     {
-                        E.SPredictionCastArc(Target, HC, true);
+
+                        if (Dashing.Hitchance == HitChance.Dashing)
+                            E.CastIfHitchanceEquals(Target, HitChance.Dashing, true);
+
+                        if (Target.CanMove && Player.Distance(Target) < E.Range * 0.95)
+                            E.CastIfHitchanceEquals(Target, HC, true);
+
+                        if (!Target.CanMove)
+                            E.CastIfHitchanceEquals(Target, HC, true);
                     }
 
-                    if (Dashing.Hitchance == HitChance.Dashing)
-                        E.CastIfHitchanceEquals(Target, HitChance.Dashing, true);
-
-                    if (Target.CanMove && Player.Distance(Target) < E.Range * 0.95)
-                        E.CastIfHitchanceEquals(Target, HC, true);
-
-                    if (!Target.CanMove)
-                        E.CastIfHitchanceEquals(Target, HC, true);
+                    if (Option.Item("Prediction M").GetValue<StringList>().SelectedIndex == 1)
+                    {
+                        E.SPredictionCast(Target, HC);
+                    }
+                        
                 }
             }
         }
@@ -353,7 +356,7 @@ namespace Sense_Elise
         {
             if (Spider() && Q2.IsReady())
             {
-                var Target = TargetSelector.GetTarget(Q2.Range, TargetSelector.DamageType.Magical);
+                var Target = TargetSelector.GetTarget(Q2.Range, TargetSelector.DamageType.Magical,true );
                 if (Target != null)
                     Q2.CastOnUnit(Target, true);
             }
@@ -385,8 +388,8 @@ namespace Sense_Elise
         {
             if (Spider() && E2.IsReady())
             {
-                var Target = TargetSelector.GetTarget(E2.Range, TargetSelector.DamageType.True);
-                var EQtarget = TargetSelector.GetTarget(E2.Range + Q.Range, TargetSelector.DamageType.True);
+                var Target = TargetSelector.GetTarget(E2.Range, TargetSelector.DamageType.True, true);
+                var EQtarget = TargetSelector.GetTarget(E2.Range + Q.Range, TargetSelector.DamageType.True, true);
                 var sEMinions = MinionManager.GetMinions(Player.ServerPosition, E2.Range).FirstOrDefault();
                 var sE2Minions = MinionManager.GetMinions(E2.Range + Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.None).FirstOrDefault(x => x.Distance(Player.Position) < Q.Range && Player.Distance(sEMinions.Position) < E2.Range);
 
@@ -402,8 +405,6 @@ namespace Sense_Elise
                 {
                     if (Target.CanMove && Player.Distance(Target) < (E2.Range + Q2.Range) - 10)
                         E2.Cast(sE2Minions, true);
-                    if (!Target.CanMove)
-                        E2.Cast(Target, true);
                 }
 
             }
@@ -413,7 +414,7 @@ namespace Sense_Elise
         {
             if (Spider() && E2.IsReady())
             {
-                var target = TargetSelector.GetTarget(E2.Range, TargetSelector.DamageType.True);
+                var target = TargetSelector.GetTarget(E2.Range, TargetSelector.DamageType.True, true);
                 if (target != null)
                 {
                     if ((!Q2.IsReady() || Q2.Range <= Player.Distance(target)) && !W2.IsReady())
@@ -425,8 +426,8 @@ namespace Sense_Elise
 
         static void CastR()
         {
-            var Target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
-            var Target2 = TargetSelector.GetTarget(Q2.Range, TargetSelector.DamageType.Magical);
+            var Target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical, true);
+            var Target2 = TargetSelector.GetTarget(Q2.Range, TargetSelector.DamageType.Magical, true);
 
             if (Target != null && R.IsReady())
             {
@@ -444,8 +445,8 @@ namespace Sense_Elise
                 if (Spider())
                 {
                     if (!Q2.IsReady() && !W2.IsReady() && !Player.HasBuff("EliseSpiderW"))
-                        if ((_humaQcd == 0 || _humaWcd <= 1.5f && _humaEcd <= 1.0f))
-                            if ((_spideQcd <= 1.0f && Target2.Health <= Q2.GetDamage(Target2)) && (_spideQcd <= 1.4f || _spideWcd <= 1.9f)) return;
+                        if (_humaQcd == 0 || (_humaWcd <= 1.5f && _humaEcd <= 0.8f))
+                            if ((_spideQcd <= 1.0f && Target2.Health <= Q2.GetDamage(Target2)) || (_spideQcd <= 1.4f || _spideWcd <= 1.9f)) return;
                             else
                                 R.Cast();
                 }
@@ -458,14 +459,14 @@ namespace Sense_Elise
             {
                 if (Option_Item("KillSteal Human Q") && Q.IsReady())
                 {
-                    var Qtarget = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
+                    var Qtarget = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical, true);
                     if (Qtarget != null && Qtarget.Health <= Q.GetDamage(Qtarget))
                         Q.CastOnUnit(Qtarget, true);
                 }
 
                 if (Option_Item("KillSteal Human W") && W.IsReady())
                 {
-                    var Wtarget = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical);
+                    var Wtarget = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical, true);
                     var prediction = W.GetPrediction(Wtarget);
                     if (Wtarget != null && Wtarget.Health <= W.GetDamage(Wtarget) && prediction.CollisionObjects.Count == 0)
                         W.Cast(Wtarget.ServerPosition, true);
@@ -475,7 +476,7 @@ namespace Sense_Elise
             {
                 if (Option_Item("KillSteal Spider Q") && Q2.IsReady())
                 {
-                    var Q2target = TargetSelector.GetTarget(Q2.Range, TargetSelector.DamageType.Magical);
+                    var Q2target = TargetSelector.GetTarget(Q2.Range, TargetSelector.DamageType.Magical, true);
                     if (Q2target != null && Q2target.Health <= Q2.GetDamage(Q2target))
                         Q2.CastOnUnit(Q2target, true);
                 }
@@ -603,7 +604,7 @@ namespace Sense_Elise
                 if (Option_Item("Human E Draw Range"))
                     Render.Circle.DrawCircle(Player.Position, E.Range, Color.Green, 1);
 
-                var ETarget = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.True);
+                var ETarget = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.True, true);
                 if (Option_Item("Human E Draw Target"))
                     if (ETarget != null)
                         Drawing.DrawCircle(ETarget.Position, 150, Color.Green);
@@ -636,13 +637,13 @@ namespace Sense_Elise
                 if (Option_Item("Spider E Draw Range"))
                     Render.Circle.DrawCircle(Player.Position, E2.Range, Color.Yellow, 1);
 
-                var E2target = TargetSelector.GetTarget(E2.Range, TargetSelector.DamageType.True);
+                var E2target = TargetSelector.GetTarget(E2.Range, TargetSelector.DamageType.True, true);
                 if (Option_Item("Spider E Draw Target"))
                     if (E2target != null)
                         Drawing.DrawCircle(E2target.Position, 150, Color.Green);
 
 
-                var EQtarget = TargetSelector.GetTarget(E2.Range + Q2.Range, TargetSelector.DamageType.Magical);
+                var EQtarget = TargetSelector.GetTarget(E2.Range + Q2.Range, TargetSelector.DamageType.True, true);
                 var sEMinions = MinionManager.GetMinions(Player.ServerPosition, E2.Range).FirstOrDefault();
                 var sE2Minions = MinionManager.GetMinions(E2.Range + Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.None).FirstOrDefault(x => x.Distance(Player.Position) < Q.Range && Player.Distance(sEMinions.Position) < E2.Range);
                 if (Option_Item("Spider EQ Draw Minion"))
@@ -680,11 +681,10 @@ namespace Sense_Elise
             Option.AddSubMenu(new Menu("Orbwalker", "Orbwalker"));
             orbWalker = new Orbwalking.Orbwalker(Option.SubMenu("Orbwalker"));
 
-            var Prediction = new Menu("Prediction", "Prediction Mode");
+            var Prediction = new Menu("Prediction", "Prediction");
             {
-                Prediction.AddItem(new MenuItem("Prediction", "Prediction Mode").SetValue(new StringList(new[] { "Common", "Sprediction"}, 0)));
-                Prediction.AddItem(new MenuItem("E Hitchance", "Human E Hitchance").SetValue(new StringList(new[] { "VeryHigh", "High", "Medium", "Low", "Impossible" })));
-                Prediction.AddItem(new MenuItem("Reload", "Press F5 Reload again")).Show(false).SetFontStyle(System.Drawing.FontStyle.Regular, SharpDX.Color.SkyBlue);
+                Prediction.AddItem(new MenuItem("Prediction M", "Prediction Mode").SetValue(new StringList(new[] { "Common"})));
+                Prediction.AddItem(new MenuItem("E Hitchance", "Human E Hitchance").SetValue(new StringList(new[] { "Impossible", "Low", "Medium", "High", "VeryHigh" }, 3)));
             }
             Option.AddSubMenu(Prediction);
 

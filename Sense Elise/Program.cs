@@ -686,6 +686,7 @@ namespace Sense_Elise
                 Prediction.AddItem(new MenuItem("E Hitchance", "Human E Hitchance").SetValue(new StringList(new[] { "VeryHigh", "High", "Medium", "Low", "Impossible" })));
                 Prediction.AddItem(new MenuItem("Reload", "Press F5 Reload again")).Show(false).SetFontStyle(System.Drawing.FontStyle.Regular, SharpDX.Color.SkyBlue);
             }
+            Option.AddSubMenu(Prediction);
 
             var Harass = new Menu("Harass", "Harass");
             {

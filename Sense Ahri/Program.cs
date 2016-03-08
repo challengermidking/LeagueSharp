@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using LeagueSharp;
 using LeagueSharp.Common;
 using Color = System.Drawing.Color;
 using SharpDX;
-
+using SPrediction;
 
 namespace Sense_Ahri
 {
@@ -13,11 +12,11 @@ namespace Sense_Ahri
     {
         public static Obj_AI_Hero Player;
         public static string championName = "Ahri";
-        public static Spell Q, W, E, R, EFlash;
+        public static Spell Q, W, E, R;
         public static Menu Option;
         public static Orbwalking.Orbwalker orbwalker;
         public static SpellSlot Ignite = ObjectManager.Player.GetSpellSlot("summonerDot");
-        public static SpellSlot Flash = ObjectManager.Player.GetSpellSlot("summonerFlash");
+       
         public static HpBarIndicator Indicator = new HpBarIndicator();
 
         static void Main(string[] args)
@@ -30,11 +29,10 @@ namespace Sense_Ahri
             Player = ObjectManager.Player;
             if (Player.ChampionName != championName) return;
 
-            Q = new Spell(SpellSlot.Q, 950);
+            Q = new Spell(SpellSlot.Q, 950) { MinHitChance = hitChanceQ() };
             W = new Spell(SpellSlot.W, 620);
-            E = new Spell(SpellSlot.E, 980);
+            E = new Spell(SpellSlot.E, 980) { MinHitChance = hitChanceE() };
             R = new Spell(SpellSlot.R, 475);
-            EFlash = new Spell(SpellSlot.E, 1375);
 
             Q.SetSkillshot(0.25f, 50, 1700, false, SkillshotType.SkillshotLine);
             W.SetSkillshot(0.7f, W.Range, float.MaxValue, false, SkillshotType.SkillshotCircle);
@@ -44,7 +42,6 @@ namespace Sense_Ahri
             Game.OnUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
             Drawing.OnEndScene += Drawing_OnEndScene;
-            AntiGapcloser.OnEnemyGapcloser += AntiGapcloser_OnEnemyGapcloser;
             Interrupter2.OnInterruptableTarget += Interrupter2_OnInterruptableTarget;
         }
 
@@ -74,7 +71,7 @@ namespace Sense_Ahri
                 if (!Q.IsReady()) return;
                 else
                 {
-                    var QTarget = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
+                    var QTarget = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical, true);
                     if (QTarget != null && QTarget.Health <= Q.GetDamage(QTarget))
                         Q.CastIfHitchanceEquals(QTarget, HitChance.High, true);
                 }
@@ -85,21 +82,10 @@ namespace Sense_Ahri
                 if (!E.IsReady()) return;
                 else
                 {
-                    var ETarget = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
+                    var ETarget = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical, true);
                     if (ETarget != null && ETarget.Health <= Q.GetDamage(ETarget))
                         E.CastIfHitchanceEquals(ETarget, HitChance.High, true);
                 }
-            }
-        }
-
-        static void AntiGapcloser_OnEnemyGapcloser(ActiveGapcloser gapcloser)
-        {
-            if (!Option_item("GapCloser")) return;
-            else
-            {
-                if (E.IsReady())
-                    if (ObjectManager.Player.Distance(gapcloser.Sender) <= E.Range + 50)
-                        E.Cast(gapcloser.Sender);
             }
         }
 
@@ -109,7 +95,7 @@ namespace Sense_Ahri
             else
             {
                 if (E.IsReady())
-                    if (ObjectManager.Player.Distance(sender) <= E.Range + 50 && args.DangerLevel >= Interrupter2.DangerLevel.Medium)
+                    if (ObjectManager.Player.Distance(sender) < E.Range && args.DangerLevel >= Interrupter2.DangerLevel.Medium)
                         if (E.GetPrediction(sender).Hitchance >= HitChance.Medium)
                             E.Cast(sender);
             }
@@ -212,7 +198,7 @@ namespace Sense_Ahri
 
         static void Combo()
         {
-            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
+            var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical, true);
             if (!R.IsReady())
             {
                 if (Option_item("CUseQ"))
@@ -262,9 +248,16 @@ namespace Sense_Ahri
             if (!Q.IsReady()) return;
             else
             {
-                var Target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
+                var Target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical, true);
                 if (Target != null)
+                {
+                    if (Option.Item("Prediction M").GetValue<StringList>().SelectedValue == "SPrediction")
+                    {
+                        Q.SPredictionCast(Target, Q.MinHitChance);
+                    }
+
                     Q.CastIfHitchanceEquals(Target, hitChanceQ(), true);
+                }
             }
         }
 
@@ -273,7 +266,7 @@ namespace Sense_Ahri
             if (!W.IsReady()) return;
             else
             {
-                var Target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical);
+                var Target = TargetSelector.GetTarget(W.Range, TargetSelector.DamageType.Magical, true);
                 if (Target != null)
                 {
                     if (Player.IsDashing())
@@ -290,16 +283,24 @@ namespace Sense_Ahri
             if (!E.IsReady()) return;
             else
             {
-                var Target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
+                var Target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical, true);
                 if (Target != null)
                 {
                     if (Target.HasBuff("BansheesVeil")) return;
 
-                    if (Target.CanMove && Target.Distance(Player.Position) < E.Range * 0.9)
-                        E.CastIfHitchanceEquals(Target, hitChanceE(), true);
+                    if (Option.Item("Prediction M").GetValue<StringList>().SelectedIndex == 1)
+                    {
+                        E.SPredictionCast(Target, E.MinHitChance);
+                    }
 
-                    if (!Target.CanMove)
-                        E.CastIfHitchanceEquals(Target, hitChanceE(), true);
+                    if (Option.Item("Prediction M").GetValue<StringList>().SelectedIndex == 0)
+                    {
+                        if (Target.CanMove && Target.Distance(Player.Position) < E.Range * 0.9)
+                            E.CastIfHitchanceEquals(Target, hitChanceE(), true);
+
+                        if (!Target.CanMove)
+                            E.CastIfHitchanceEquals(Target, hitChanceE(), true);
+                    }
                 }
             }
         }
@@ -337,17 +338,17 @@ namespace Sense_Ahri
             switch (Option.Item("HitQ").GetValue<StringList>().SelectedIndex)
             {
                 case 0:
-                    return HitChance.VeryHigh;
+                    return HitChance.Impossible;
                 case 1:
-                    return HitChance.High;
+                    return HitChance.Low;
                 case 2:
                     return HitChance.Medium;
                 case 3:
-                    return HitChance.Low;
+                    return HitChance.High;
                 case 4:
-                    return HitChance.Impossible;
-                default:
                     return HitChance.VeryHigh;
+                default:
+                    return HitChance.High;
             }
         }
 
@@ -356,17 +357,17 @@ namespace Sense_Ahri
             switch (Option.Item("HitE").GetValue<StringList>().SelectedIndex)
             {
                 case 0:
-                    return HitChance.VeryHigh;
+                    return HitChance.Impossible;
                 case 1:
-                    return HitChance.High;
+                    return HitChance.Low;
                 case 2:
                     return HitChance.Medium;
                 case 3:
-                    return HitChance.Low;
+                    return HitChance.High;
                 case 4:
-                    return HitChance.Impossible;
-                default:
                     return HitChance.VeryHigh;
+                default:
+                    return HitChance.High;
             }
         }
 
@@ -397,14 +398,18 @@ namespace Sense_Ahri
 
             if (Q.IsReady())
                 damage += (Q.GetDamage(Enemy) * 2.0f);
+
             if (W.IsReady())
                 damage += W.GetDamage(Enemy);
             if (E.IsReady())
+
                 damage += E.GetDamage(Enemy);
             if (R.IsReady())
+
                 damage += (R.GetDamage(Enemy) * GetRCount());
             if (Player.Spellbook.CanUseSpell(Player.GetSpellSlot("summonerdot")) == SpellState.Ready)
                 damage += (float)Player.GetSummonerSpellDamage(Enemy, Damage.SummonerSpell.Ignite);
+
             if (!Player.IsWindingUp)
                 damage += (float)ObjectManager.Player.GetAutoAttackDamage(Enemy, true);
 
@@ -436,6 +441,14 @@ namespace Sense_Ahri
             var targetSelectorMenu = new Menu("Target Selector", "TargetSelector");
             TargetSelector.AddToMenu(targetSelectorMenu);
             Option.AddSubMenu(targetSelectorMenu);
+
+            var Prediction = new Menu("Prediction Mode", "Prediction Mode");
+            {
+                Prediction.AddItem(new MenuItem("Prediction M", "Prediction Mode").SetValue(new StringList(new[] { "Common", "Sprediction" }, 0)));
+                Prediction.AddItem(new MenuItem("HitQ", "Q HitChace").SetValue(new StringList(new[] { "Impossible", "Low", "Medium", "High", "VeryHigh" }, 3)));
+                Prediction.AddItem(new MenuItem("HitE", "E HitChace").SetValue(new StringList(new[] { "Impossible", "Low", "Medium", "High", "VeryHigh" }, 3)));
+            }
+            Option.AddSubMenu(Prediction);
 
             var Harass = new Menu("Harass", "Harass");
             {
@@ -471,17 +484,14 @@ namespace Sense_Ahri
                 Combo.AddItem(new MenuItem("CUseQ", "Use Q").SetValue(true));
                 Combo.AddItem(new MenuItem("CUseW", "Use W").SetValue(true));
                 Combo.AddItem(new MenuItem("CUseE", "Use E").SetValue(true));
-                Combo.AddItem(new MenuItem("CUseR", "Use R").SetValue(new StringList(new[] { "Never", "Kill", "Always" })));
+                Combo.AddItem(new MenuItem("CUseR", "Use R").SetValue(new StringList(new[] { "Never", "Kill", "Always" }, 1)));
+                Combo.AddItem(new MenuItem("Ignite", "Use Ignite").SetValue(true));
             }
             Option.AddSubMenu(Combo);
 
             var Misc = new Menu("Misc", "Misc");
             {
-                Misc.AddItem(new MenuItem("Ignite", "Use Ignite").SetValue(true));
                 Misc.AddItem(new MenuItem("Interrupt", "Auto Use E to interrupt").SetValue(true));
-                Misc.AddItem(new MenuItem("GapCloser", "Auto Use E to Anti-GapCloser").SetValue(true));
-                Misc.SubMenu("Skill HitChace").AddItem(new MenuItem("HitQ", "Q HitChace").SetValue(new StringList(new[] { "VeryHigh", "High", "Medium", "Low", "Impossible" })));
-                Misc.SubMenu("Skill HitChace").AddItem(new MenuItem("HitE", "E HitChace").SetValue(new StringList(new[] { "VeryHigh", "High", "Medium", "Low", "Impossible" })));
                 Misc.SubMenu("Flee").AddItem(new MenuItem("FUseE", "Use E").SetValue(true));
                 Misc.SubMenu("Flee").AddItem(new MenuItem("FUseR", "Use R").SetValue(false));
                 Misc.SubMenu("Flee").AddItem(new MenuItem("FleeK", "Flee Key").SetValue(new KeyBind('G', KeyBindType.Press)));
@@ -489,7 +499,6 @@ namespace Sense_Ahri
                 Misc.SubMenu("KillSteal").AddItem(new MenuItem("KillE", "Use E").SetValue(true));
             }
             Option.AddSubMenu(Misc);
-
 
             var Drawing = new Menu("Drawing", "Drawing");
             {

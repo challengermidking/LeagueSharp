@@ -646,7 +646,7 @@ namespace Sense_Elise
                 var EQtarget = TargetSelector.GetTarget(E2.Range + Q2.Range, TargetSelector.DamageType.True, true);
                 var sEMinions = MinionManager.GetMinions(Player.ServerPosition, E2.Range).FirstOrDefault();
                 var sE2Minions = MinionManager.GetMinions(E2.Range + Q.Range, MinionTypes.All, MinionTeam.Enemy, MinionOrderTypes.None).FirstOrDefault(x => x.Distance(Player.Position) < Q.Range && Player.Distance(sEMinions.Position) < E2.Range);
-                if (Option_Item("Spider EQ Draw Minion"))
+                if (Option_Item("Spider EQ Draw Target"))
                     if (EQtarget != null && E2target == null && sE2Minions != null)
                         Drawing.DrawCircle(EQtarget.Position, 150, Color.Blue);
 
@@ -681,9 +681,9 @@ namespace Sense_Elise
             Option.AddSubMenu(new Menu("Orbwalker", "Orbwalker"));
             orbWalker = new Orbwalking.Orbwalker(Option.SubMenu("Orbwalker"));
 
-            var Prediction = new Menu("Prediction", "Prediction");
+            var Prediction = new Menu("Prediction Mode", "Prediction Mode");
             {
-                Prediction.AddItem(new MenuItem("Prediction M", "Prediction Mode").SetValue(new StringList(new[] { "Common"})));
+                Prediction.AddItem(new MenuItem("Prediction M", "Prediction Mode").SetValue(new StringList(new[] { "Common", "Sprediction"}, 0)));
                 Prediction.AddItem(new MenuItem("E Hitchance", "Human E Hitchance").SetValue(new StringList(new[] { "Impossible", "Low", "Medium", "High", "VeryHigh" }, 3)));
             }
             Option.AddSubMenu(Prediction);
@@ -764,7 +764,7 @@ namespace Sense_Elise
                 Drawing.SubMenu("Spider Skill").AddItem(new MenuItem("Spider Q Draw", "Use Q").SetValue(false));
                 Drawing.SubMenu("Spider Skill").AddItem(new MenuItem("Spider E Draw Range", "Use E Range").SetValue(false));
                 Drawing.SubMenu("Spider Skill").AddItem(new MenuItem("Spider E Draw Target", "Use E Target").SetValue(true));
-                Drawing.SubMenu("Spider Skill").AddItem(new MenuItem("Spider EQ Draw Minion", "Use EQ Target(Minion)").SetValue(true));
+                Drawing.SubMenu("Spider Skill").AddItem(new MenuItem("Spider EQ Draw Minion", "Use EQ Target(Minion Jump)").SetValue(true));
                 Drawing.SubMenu("Spider Skill").AddItem(new MenuItem("Spider Skill Cooldown", "Skill Cooldown").SetValue(true));
                 Drawing.AddItem(new MenuItem("DamageAfterCombo", "Draw Combo Damage").SetValue(true));
             }

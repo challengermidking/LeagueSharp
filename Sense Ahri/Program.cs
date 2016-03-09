@@ -16,7 +16,7 @@ namespace Sense_Ahri
         public static Menu Option;
         public static Orbwalking.Orbwalker orbwalker;
         public static SpellSlot Ignite = ObjectManager.Player.GetSpellSlot("summonerDot");
-       
+
         public static HpBarIndicator Indicator = new HpBarIndicator();
 
         static void Main(string[] args)
@@ -37,7 +37,7 @@ namespace Sense_Ahri
             Q.SetSkillshot(0.25f, 50, 1700, false, SkillshotType.SkillshotLine);
             W.SetSkillshot(0.7f, W.Range, float.MaxValue, false, SkillshotType.SkillshotCircle);
             E.SetSkillshot(0.25f, 60, 1600, true, SkillshotType.SkillshotLine);
-    
+
             MainMenu();
             Game.OnUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
@@ -120,17 +120,17 @@ namespace Sense_Ahri
 
         static void Clear()
         {
-            if (Player.ManaPercent <= Option.Item("HMana").GetValue<Slider>().Value && !Option.Item("LToggle").GetValue<KeyBind>().Active ) return;
+            if (Player.ManaPercent <= Option.Item("HMana").GetValue<Slider>().Value && !Option.Item("LToggle").GetValue<KeyBind>().Active) return;
             else
             {
                 var Minions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range, MinionTypes.All, MinionTeam.NotAlly);
                 if (Minions == null) return;
-                
+
 
                 if (Option_item("LUseQ"))
                 {
                     MinionManager.FarmLocation farmLocation = Q.GetLineFarmLocation(Minions);
-                   
+
                     if (farmLocation.Position.IsValid())
                     {
                         if (farmLocation.MinionsHit >= 3)
@@ -142,7 +142,7 @@ namespace Sense_Ahri
                 if (Option_item("LUseE"))
                 {
                     var Minion = MinionManager.GetMinions(E.Range, MinionTypes.All, MinionTeam.NotAlly)
-                        .Where(x => x.Health < W.GetDamage(x)).OrderByDescending(x => x.MaxHealth).ThenByDescending(x => x.Distance(Player)).FirstOrDefault();
+                        .Where(x => x.Health < E.GetDamage(x)).OrderByDescending(x => x.MaxHealth).ThenByDescending(x => x.Distance(Player)).FirstOrDefault();
                     if (Minion != null)
                         E.Cast(Minion, true);
                 }
@@ -163,7 +163,7 @@ namespace Sense_Ahri
             {
                 if (Option_item("JUseQ"))
                 {
-                    MinionManager.FarmLocation Mobs = Q.GetCircularFarmLocation(JungleMinions);
+                    MinionManager.FarmLocation Mobs = Q.GetLineFarmLocation(JungleMinions);
                     if (Mobs.Position.IsValid())
                     {
                         if (JungleMinions.Count == 4)
@@ -220,7 +220,7 @@ namespace Sense_Ahri
                         R.Cast(Game.CursorPos, true);
 
                 if (Option.Item("CUseR").GetValue<StringList>().SelectedIndex == 2)
-                    R.Cast(Game.CursorPos ,true);
+                    R.Cast(Game.CursorPos, true);
 
                 if (Option_item("CUseQ"))
                     CastQ();
@@ -514,3 +514,5 @@ namespace Sense_Ahri
     }
 }
 
+Status API Training Shop Blog About Pricing
+© 2016 GitHub, Inc.Terms Privacy Security Contact Help

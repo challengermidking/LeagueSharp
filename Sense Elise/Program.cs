@@ -294,9 +294,6 @@ namespace Sense_Elise
                 {
                     if (prediction.CollisionObjects.Count == 0 && prediction.Hitchance >= HitChance.Medium)
                         W.Cast(Target.ServerPosition, true);
-
-                    if (_spideQcd == 0 && _spideWcd == 0 && prediction.CollisionObjects.Count >= 1)
-                        W.Cast(Player.Position, true);
                 }
             }
         }

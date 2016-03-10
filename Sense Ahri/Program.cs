@@ -29,9 +29,9 @@ namespace Sense_Ahri
             Player = ObjectManager.Player;
             if (Player.ChampionName != championName) return;
 
-            Q = new Spell(SpellSlot.Q, 950) { MinHitChance = hitChanceQ() };
+            Q = new Spell(SpellSlot.Q, 950);
             W = new Spell(SpellSlot.W, 620);
-            E = new Spell(SpellSlot.E, 980) { MinHitChance = hitChanceE() };
+            E = new Spell(SpellSlot.E, 980);
             R = new Spell(SpellSlot.R, 475);
 
             Q.SetSkillshot(0.25f, 50, 1700, false, SkillshotType.SkillshotLine);
@@ -513,6 +513,3 @@ namespace Sense_Ahri
         }
     }
 }
-
-Status API Training Shop Blog About Pricing
-© 2016 GitHub, Inc.Terms Privacy Security Contact Help

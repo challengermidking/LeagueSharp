@@ -330,9 +330,6 @@ namespace Sense_Elise
                     if (Option.Item("Prediction M").GetValue<StringList>().SelectedIndex == 0)
                     {
 
-                        if (Dashing.Hitchance == HitChance.Dashing)
-                            E.CastIfHitchanceEquals(Target, HitChance.Dashing, true);
-
                         if (Target.CanMove && Player.Distance(Target) < E.Range * 0.95)
                             E.CastIfHitchanceEquals(Target, HC, true);
 

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using LeagueSharp;
 using LeagueSharp.Common;
 using Color = System.Drawing.Color;
@@ -185,15 +182,7 @@ namespace Sense_Nautilus
             prediction.CollisionObjects.Count(x => x.IsEnemy && !x.IsZombie && (prediction.Hitchance >= HitChance.High || prediction.Hitchance == HitChance.Immobile));
 
             if (target != null && (Player.Distance(target) > E.Range || !E.IsReady()))
-            {
-                if (target.CanMove && Player.Distance(target) < Q.Range * 0.95)
-                    Q.Cast(prediction.CastPosition, true);
-
-                if (!target.CanMove)
-                    Q.Cast(prediction.CastPosition, true);
-            }
-                
-
+                Q.Cast(target, true);
         }
 
         static void Orbwalking_AfterAttack(AttackableUnit unit, AttackableUnit target)
@@ -228,7 +217,7 @@ namespace Sense_Nautilus
                 if (target.Health < GetComboDamage(target))
                     R.CastOnUnit(target, true);
 
-                if (!Q.IsReady() && !W.IsReady() && !E.IsReady())
+                if (!Q.IsReady() && !W.IsReady() && !E.IsReady() && (target.Health < (Q.GetDamage(target) + E.GetDamage(target) + R.GetDamage(target))))
                     R.CastOnUnit(target, true);
             }
         }
@@ -284,7 +273,6 @@ namespace Sense_Nautilus
         static float GetComboDamage(Obj_AI_Hero Enemy)
         {
             float Damage = 0;
-
             float pass = 2 + (Player.Level * 6);
 
             Damage += pass; 
@@ -346,7 +334,7 @@ namespace Sense_Nautilus
 
         static void MainMenu()
         {
-            Option = new Menu("Sense Nautilus", "Sense_Nautilus", true).SetFontStyle(System.Drawing.FontStyle.Regular, SharpDX.Color.SkyBlue); ;
+            Option = new Menu("Sense Nautilus", "Sense_Nautilus", true).SetFontStyle(System.Drawing.FontStyle.Regular, SharpDX.Color.SkyBlue); 
 
             var targetSelectorMenu = new Menu("Target Selector", "Target Selector");
             TargetSelector.AddToMenu(targetSelectorMenu);

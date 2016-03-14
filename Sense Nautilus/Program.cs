@@ -92,30 +92,22 @@ namespace Sense_Nautilus
                 var Minions = MinionManager.GetMinions(Player.ServerPosition, E.Range, MinionTypes.All, MinionTeam.NotAlly);
                 if (Minions != null)
                 {
-                    if (Option_Item("Lane Q") && Q.IsReady())
+                    if (Option_Item("Lane Q") && Q.IsReady() && !Player.CanAttack)
                     {
                         var Minion = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.NotAlly)
-                                                .Where(x => x.Health < Q.GetDamage(x)).OrderByDescending(x => x.MaxHealth).ThenByDescending(x => x.Distance(Player)).FirstOrDefault();
+                                                .Where(x => x.Health <= Q.GetDamage(x)).OrderByDescending(x => x.MaxHealth).ThenByDescending(x => x.Distance(Player)).FirstOrDefault();
                         if (Minion != null)
                             Q.Cast(Minion, true);
                     }
 
                     if (Option_Item("Lane E") && E.IsReady())
                     {
-                        MinionManager.FarmLocation farmLocaion = E.GetCircularFarmLocation(Minions);
+                        MinionManager.FarmLocation farmLocaion = E.GetLineFarmLocation(Minions);
                         if (farmLocaion.Position.IsValid())
                         {
-                            if (Minions.Count >= 6)
-                                if (farmLocaion.MinionsHit >= 4)
-                                    E.Cast(Player, true);
-
-                            if (Minions.Count <= 5 && Minions.Count >= 3)
-                                if (farmLocaion.MinionsHit >= 3)
-                                    E.Cast(Player, true);
-
-                            if (Minions.Count <= 2)
-                                E.Cast(Player, true);
-                            
+                            if (farmLocaion.MinionsHit >= 3)
+                                    E.Cast(true);
+           
                             if (Minions.Count == 0) return;
                         }
                     }
@@ -131,35 +123,36 @@ namespace Sense_Nautilus
             {
                 if (Option.Item("JToggle").GetValue<KeyBind>().Active)
                 {
-                    if (Option_Item("Jungle Q"))
+                    if (Option_Item("Jungle Q") && Q.IsReady() && !Player.CanAttack)
                     {
                         var Mob = MinionManager.GetMinions(Q.Range, MinionTypes.All, MinionTeam.Neutral)
-.Where(x => x.Health < W.GetDamage(x)).OrderByDescending(x => x.MaxHealth).ThenByDescending(x => x.Distance(Player)).FirstOrDefault();
+.Where(x => x.Health <= W.GetDamage(x)).OrderByDescending(x => x.MaxHealth).ThenByDescending(x => x.Distance(Player)).FirstOrDefault();
                         if (Mob != null)
                             Q.Cast(Mob, true);
                     }
 
                     if (Option_Item("Jungle E"))
                     {
-                        MinionManager.FarmLocation Mobs = E.GetCircularFarmLocation(JungleMinions);
+                        MinionManager.FarmLocation Mobs = E.GetLineFarmLocation(JungleMinions);
                         if (Mobs.Position.IsValid())
                         {
                             if (JungleMinions.Count == 4)
                                 if (Mobs.MinionsHit >= 3)
-                                    E.Cast(Player, true);
+                                    E.Cast(true);
 
                             if (JungleMinions.Count == 3)
                                 if (Mobs.MinionsHit >= 2)
-                                    E.Cast(Player, true);
+                                    E.Cast(true);
 
                             if (JungleMinions.Count <= 2)
-                                E.Cast(Player, true);
+                                E.Cast(true);
 
                             if (JungleMinions.Count == 0) return;
                         }
                     }
                 }
             }
+            if (JungleMinions.Count == 0) return;
         }
 
         static void Combo()
@@ -179,9 +172,9 @@ namespace Sense_Nautilus
         {
             var target = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
             var prediction = Q.GetPrediction(target);
-            prediction.CollisionObjects.Count(x => x.IsEnemy && !x.IsZombie && (prediction.Hitchance >= HitChance.High || prediction.Hitchance == HitChance.Immobile));
+            prediction.CollisionObjects.Count(x => x.IsEnemy && !x.IsZombie && prediction.CollisionObjects.Count ==1 && (prediction.Hitchance >= HitChance.High || prediction.Hitchance == HitChance.Immobile));
 
-            if (target != null && (Player.Distance(target) > E.Range || !E.IsReady()))
+            if (target != null && (Player.Distance(target) < E.Range || !E.IsReady()))
                 Q.Cast(target, true);
         }
 
@@ -201,7 +194,7 @@ namespace Sense_Nautilus
             var target = TargetSelector.GetTarget(E.Range, TargetSelector.DamageType.Magical);
             if (target != null)
             {
-                if (target.CanMove && Player.Distance(target) < E.Range * 0.95)
+                if (target.CanMove && Player.Distance(target) < E.Range * 0.9)
                     E.Cast(target, true);
 
                 if (!target.CanMove)
@@ -249,7 +242,7 @@ namespace Sense_Nautilus
 
         static void Flee()
         {
-            if (Option.Item("FleeK").GetValue<KeyBind>().Active)
+            if (Option.Item("Fleek").GetValue<KeyBind>().Active)
             {
                 Player.IssueOrder(GameObjectOrder.MoveTo, Game.CursorPos);
 
